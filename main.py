@@ -1,11 +1,14 @@
+# Import Package
 import os
 import csv
 import re
 from selenium import webdriver
+from selenium.common import NoSuchElementException
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 
-opt = {'head': '--headless',  # Not showing web browser UI
+# webdriver setup
+opt = {#'head': '--headless',   #Not showing web browser UI
        'sandbox': '--no-sandbox',  # Bypass OS security model
        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0'
        }
@@ -13,9 +16,10 @@ option = Options()
 for i in opt:
     option.add_argument(opt[i])
 
-scraper = webdriver.Firefox(options=option)
+# Scraping
+scraper = webdriver.Firefox(executable_path='C:/geckodriver-v0.31.0-win64/geckodriver.exe', options=option)
 scraper.get('https://www.etsy.com/search?q=gift%20for%20women')
-scraper.implicitly_wait(10)
+scraper.implicitly_wait(20)
 result = scraper.find_elements(By.CSS_SELECTOR, 'ol.wt-grid.wt-grid--block.wt-pl-xs-0.tab-reorder-container > li')
 
 data = {'url': '', 'title': '', 'price': '', 'sales': ''}
@@ -35,7 +39,7 @@ for i in result:
         data['sales'] = i.find_element(By.CSS_SELECTOR,
                                        'span.wt-text-caption.wt-text-gray.wt-display-inline-block.wt-nudge-l-3.wt-pr-xs-1').text
         data['sales'] = re.sub(r'\D', '', data['sales'])
-    except AttributeError:
+    except (AttributeError,NoSuchElementException) as e:
         data['sales'] = 0
     res.append(data.copy())
 
@@ -44,7 +48,8 @@ scraper.quit()
 print(res)
 print(f'\n{len(result)} products collected by selenium')
 
-filepath = 'C:/project/etsynium/result/result_sel.csv'
+# save into csv file
+filepath = 'C:/NaruProject/etsynium/result_sel.csv'
 print('Creating file...')
 folder = filepath.rsplit("/", 1)[0]
 try:
